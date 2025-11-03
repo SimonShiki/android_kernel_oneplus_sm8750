@@ -3914,7 +3914,9 @@ long do_mount(const char *dev_name, const char __user *dir_name,
 	// Just for the compatibility of Magic Mount KernelSU
 	if (!ret && susfs_is_auto_add_sus_ksu_default_mount_enabled &&
 			(!(flags & (MS_REMOUNT | MS_BIND | MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE)))) {
-		susfs_auto_add_sus_ksu_default_mount(dir_name);
+		if (susfs_is_current_ksu_domain()) {
+			susfs_auto_add_sus_ksu_default_mount(dir_name);
+		}
 	}
 #endif
 	path_put(&path);
