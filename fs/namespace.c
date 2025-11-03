@@ -3910,15 +3910,6 @@ long do_mount(const char *dev_name, const char __user *dir_name,
 	if (ret)
 		return ret;
 	ret = path_mount(dev_name, &path, type_page, flags, data_page);
-#if defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT) && defined(CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT)
-	// Just for the compatibility of Magic Mount KernelSU
-	if (!ret && susfs_is_auto_add_sus_ksu_default_mount_enabled &&
-			(!(flags & (MS_REMOUNT | MS_BIND | MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE)))) {
-		if (susfs_is_current_ksu_domain()) {
-			susfs_auto_add_sus_ksu_default_mount(dir_name);
-		}
-	}
-#endif
 	path_put(&path);
 	return ret;
 }
@@ -4165,6 +4156,15 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 
 	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
 
+#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
+	// - We do not check anymore if boot-completed stage is triggered
+	//   just to stop the performance loss
+	// - Just for the compatibility of Magic Mount KernelSU
+	if (!ret && susfs_is_auto_add_sus_ksu_default_mount_enabled && susfs_is_current_ksu_domain()) {
+		susfs_auto_add_sus_ksu_default_mount(dir_name);
+	}
+#endif
+
 	kfree(options);
 out_data:
 	kfree(kernel_dev);
@@ -4392,6 +4392,15 @@ out_to:
 	path_put(&to_path);
 out_from:
 	path_put(&from_path);
+#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
+	// - We do not check anymore if boot-completed stage is triggered
+	//   just to stop the performance loss
+	// - For Legacy KSU mount scheme
+	if (!ret && susfs_is_auto_add_sus_ksu_default_mount_enabled && susfs_is_current_ksu_domain()) {
+		susfs_auto_add_sus_ksu_default_mount(to_pathname);
+	}
+#endif
+
 	return ret;
 }
 
