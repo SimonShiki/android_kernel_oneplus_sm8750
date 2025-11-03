@@ -2138,9 +2138,6 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 					int flag)
 {
 	struct mount *res, *p, *q, *r, *parent;
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	bool is_zygote_not_copy_mnt_ns = (susfs_is_current_zygote_domain() && !(flag & CL_COPY_MNT_NS));
-#endif
 
 	if (!(flag & CL_COPY_UNBINDABLE) && IS_MNT_UNBINDABLE(mnt))
 		return ERR_PTR(-EINVAL);
@@ -2157,9 +2154,6 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 	p = mnt;
 	list_for_each_entry(r, &mnt->mnt_mounts, mnt_child) {
 		struct mount *s;
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-		int attach_mnt_count = 0;
-#endif
 		if (!is_subdir(r->mnt_mountpoint, dentry))
 			continue;
 
@@ -2189,14 +2183,6 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 			q = clone_mnt(p, p->mnt.mnt_root, flag);
 			if (IS_ERR(q))
 				goto out;
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-			if (is_zygote_not_copy_mnt_ns &&
-				q->mnt_id < DEFAULT_SUS_MNT_ID)
-			{
-				attach_mnt_count++;
-				q->mnt_id += attach_mnt_count;
-			}
-#endif
 			lock_mount_hash();
 			list_add_tail(&q->mnt_list, &res->mnt_list);
 			attach_mnt(q, parent, p->mnt_mp, false);
