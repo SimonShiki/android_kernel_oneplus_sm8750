@@ -258,6 +258,7 @@ int __vfs_setxattr_noperm(struct mnt_idmap *idmap,
 
 	return error;
 }
+EXPORT_SYMBOL(__vfs_setxattr_noperm);
 
 /**
  * __vfs_setxattr_locked - set an extended attribute while holding the inode
